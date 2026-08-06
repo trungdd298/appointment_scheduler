@@ -98,4 +98,49 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                     + "WHERE a.status = com.appointment_scheduler.domain.AppointmentStatus.HELD "
                     + "AND a.expiresAt < :now")
     int expireStaleHolds(@Param("now") OffsetDateTime now);
+
+    /**
+     * CONFIRMED appointments for the given bay overlapping [start, end) —
+     * {@code end} may be null (open-ended unavailability, e.g. the bay is
+     * permanently decommissioned). See ResourceUnavailabilityService.
+     */
+    @Query(
+            value =
+                    """
+                    SELECT * FROM appointment a
+                    WHERE a.status = 'CONFIRMED' AND a.bay_id = :bayId
+                      AND a.during && tstzrange(:start, COALESCE(CAST(:end AS timestamptz), 'infinity'), '[)')
+                    """,
+            nativeQuery = true)
+    List<Appointment> findConfirmedByBayOverlapping(
+            @Param("bayId") Long bayId,
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end);
+
+    /** Same as {@link #findConfirmedByBayOverlapping}, scoped to a technician instead. */
+    @Query(
+            value =
+                    """
+                    SELECT * FROM appointment a
+                    WHERE a.status = 'CONFIRMED' AND a.technician_id = :technicianId
+                      AND a.during && tstzrange(:start, COALESCE(CAST(:end AS timestamptz), 'infinity'), '[)')
+                    """,
+            nativeQuery = true)
+    List<Appointment> findConfirmedByTechnicianOverlapping(
+            @Param("technicianId") Long technicianId,
+            @Param("start") OffsetDateTime start,
+            @Param("end") OffsetDateTime end);
+
+    /**
+     * Safety net: a NEEDS_ATTENTION appointment unresolved past its
+     * escalation_deadline is auto-cancelled so the customer is never left
+     * showing up to no one available. See
+     * .claude/docs/reconciliation.md#safety-net.
+     */
+    @Modifying
+    @Query(
+            "UPDATE Appointment a SET a.status = com.appointment_scheduler.domain.AppointmentStatus.CANCELLED "
+                    + "WHERE a.status = com.appointment_scheduler.domain.AppointmentStatus.NEEDS_ATTENTION "
+                    + "AND a.escalationDeadline < :now")
+    int cancelUnresolvedEscalations(@Param("now") OffsetDateTime now);
 }

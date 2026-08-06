@@ -11,11 +11,11 @@ in application code.
 
 **Status:** design phase complete. Local Postgres, initial Flyway
 migrations, JPA entities/repositories, duration resolution, availability
-search, and hold/confirm booking are in place — including a concurrency
-test proving the double-booking guarantee (20 concurrent hold requests for
-the same slot, exactly one wins) against real Postgres. No resource-
-unavailability reconciliation, controllers, or frontend exist yet —
-reconciliation is the next task.
+search, hold/confirm booking, and resource-unavailability reconciliation
+are all in place and verified against real Postgres — including a
+concurrency test proving the double-booking guarantee (20 concurrent hold
+requests for the same slot, exactly one wins). No REST controllers, seed
+data, or frontend exist yet — controllers are the next task.
 
 ## 2. Tech Stack
 

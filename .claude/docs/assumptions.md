@@ -35,3 +35,17 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
    specified beyond design-decisions' "bounded number of times" — 10 is
    well above any realistic per-dealership bay count, so it only limits
    pathological cases. See `BookingService.MAX_BAY_RETRY_ATTEMPTS`.
+10. **`escalation_deadline` = the appointment's own `start_time`.** Design
+    decisions say only "near the appointment time," without an exact
+    offset — using `start_time` itself means an unresolved
+    `NEEDS_ATTENTION` appointment auto-cancels by the moment the customer
+    would have shown up, rather than proactively earlier. Customer
+    notification is out of scope regardless (see #6), so the exact timing
+    matters less. See `ResourceUnavailabilityService.markNeedsAttention`.
+11. **A bay-unavailability reconciliation that finds no replacement bay
+    also escalates to `NEEDS_ATTENTION`.** Not covered by the design docs,
+    which only describe the "replacement found" case — leaving a
+    `CONFIRMED` appointment pointed at a bay that's now unavailable would
+    be actively wrong, so it falls back to the same ops-escalation path
+    technician unavailability uses. See
+    `ResourceUnavailabilityService.reconcileBayUnavailability`.
