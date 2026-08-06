@@ -44,9 +44,8 @@ idempotent against client retries.
 2. If no row matches, fall back to `service_type.duration_minutes`.
 3. The client never supplies an arbitrary duration.
 
-(The override table and `vehicle_ref.vehicle_category` are a planned schema
-addition — not yet present in `schema.sql`. See
-[data-model.md](data-model.md).)
+(See [data-model.md](data-model.md) for the override table and
+`vehicle_ref.vehicle_category` column.)
 
 ## Endpoint reference
 

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: appointment_scheduler_postgres
+    environment:
+      POSTGRES_DB: appointment_scheduler
+      POSTGRES_USER: appointment_scheduler
+      POSTGRES_PASSWORD: appointment_scheduler
+    ports:
+      # Host port 5433 (not the default 5432) to avoid clashing with any
+      # other local Postgres instance. Matches DB_URL's default in
+      # src/main/resources/application.properties.
+      - "5433:5432"
+    volumes:
+      - appointment_scheduler_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appointment_scheduler"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  appointment_scheduler_pgdata:
