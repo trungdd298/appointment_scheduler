@@ -33,4 +33,31 @@ Postgres 16 instance.
 - All schema changes go through a new Flyway migration file — never edit an
   already-applied migration.
 
+## JPA mapping notes
+
+Entities live under `com.appointment_scheduler.domain`, one file per table,
+plus enums (`AppointmentStatus`, `ResourceType`, `VehicleCategory`,
+`UnavailabilitySource`) matching the CHECK-constraint/native-enum values.
+Repositories under `com.appointment_scheduler.repository` are plain
+`JpaRepository`s for now — no custom query methods yet (those land with the
+availability/booking services).
+
+- The generated `during` range columns (`appointment`, `resource_unavailability`)
+  are **not mapped** on either entity — range-overlap queries use `during`
+  directly via native SQL, not through a Java property.
+- `dealership.days_open` (`smallint[]`) maps to `Short[]` via
+  `@JdbcTypeCode(SqlTypes.ARRAY)`.
+- `vehicle_ref.vehicle_category` and
+  `service_type_duration_override.vehicle_category` (native Postgres enum
+  type) map via `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — plain
+  `@Enumerated(EnumType.STRING)` alone is only correct for the `TEXT` +
+  `CHECK`-constraint columns (`appointment.status`,
+  `resource_unavailability.resource_type`/`source`).
+- `hold_token`, `created_at`, `updated_at` are `insertable = false,
+  updatable = false` — Postgres generates/maintains them (default value,
+  trigger); the in-memory entity only has real values after a fresh
+  `findById`, not immediately after `save()`.
+- Verified with `src/test/java/.../repository/EntityMappingIT.java`
+  (Testcontainers-backed, not H2 — the schema is Postgres-specific).
+
 See also: [architecture.md](architecture.md) (ownership rationale), [assumptions.md](assumptions.md) (scope cuts).

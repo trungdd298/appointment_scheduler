@@ -9,10 +9,11 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** design phase complete. Local Postgres (`docker-compose.yml`)
-and the initial Flyway migrations are in place and verified against a real
-Postgres 16 instance. No entities, controllers, services, or frontend exist
-yet — that's the next task.
+**Status:** design phase complete. Local Postgres, initial Flyway
+migrations, JPA entities, and repositories are in place — all verified
+against real Postgres via Testcontainers, including the riskier mappings
+(the `smallint[]` array column, the native Postgres enum type). No
+services, controllers, or frontend exist yet — that's the next task.
 
 ## 2. Tech Stack
 
@@ -22,7 +23,10 @@ yet — that's the next task.
 - Gradle (wrapper included, no local install needed)
 - PostgreSQL 14+ (requires `btree_gist` and `pgcrypto` extensions)
 - Spring Data JPA, Flyway (schema migrations)
-- Testcontainers + JUnit 5 for integration tests (planned, not yet added)
+- Testcontainers + JUnit 5 for integration tests (versions managed by
+  Spring Boot's dependency-management BOM — note Testcontainers 2.x
+  renamed modules, e.g. `org.testcontainers:testcontainers-postgresql`,
+  not `org.testcontainers:postgresql`)
 - Frontend (planned, not yet scaffolded): React + TypeScript + Vite
 
 ## 3. Dev Commands
