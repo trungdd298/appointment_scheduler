@@ -9,12 +9,13 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** the full API is implemented and runnable end-to-end — Postgres,
-migrations, entities/repositories, all domain services, and REST
-controllers matching `openapi.yaml`, all verified against real Postgres
-(including a concurrency test proving the double-booking guarantee: 20
-concurrent hold requests for the same slot, exactly one wins). No seed data
-or frontend exist yet — seed data is the next task.
+**Status:** the full API is implemented, seeded, and runnable end-to-end —
+Postgres, migrations, entities/repositories, all domain services, REST
+controllers matching `openapi.yaml`, and dev seed data, all verified
+against real Postgres (including a concurrency test proving the
+double-booking guarantee, and a manual smoke test of the real hold → confirm
+→ double-booking-rejected flow via curl against a running `bootRun`
+instance). No frontend exists yet — that's the next task.
 
 ## 2. Tech Stack
 
@@ -39,15 +40,17 @@ or frontend exist yet — seed data is the next task.
 ## 3. Dev Commands
 
 ```bash
-docker compose up -d   # start local Postgres (host port 5433, see docker-compose.yml) — only needed for bootRun and contextLoads()
-./gradlew build         # compile + package
-./gradlew bootRun       # run the API locally on :8080 against the Postgres above
-./gradlew test          # unit tests + Testcontainers-backed integration tests (spin up their own ephemeral Postgres — Docker must be running, but not docker-compose)
+docker compose up -d                              # start local Postgres (host port 5433, see docker-compose.yml)
+./gradlew build                                    # compile + package
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun       # run the API on :8080, seeded with sample data (see below)
+./gradlew test                                     # unit tests + Testcontainers-backed integration tests (spin up their own ephemeral Postgres — Docker must be running, but not docker-compose)
 ```
 
-The API is fully wired (see `.claude/docs/openapi.yaml`), but there's no
-seed data yet — `bootRun` starts against an empty schema, so every endpoint
-will 404 until seed data (or a manual insert) exists.
+`SPRING_PROFILES_ACTIVE=dev` activates `DevDataSeeder`, which inserts one
+dealership (3 bays, 3 technicians, 4 service types, 3 vehicles, 2
+customers — all with IDs starting at 1) if the DB is empty; safe to
+restart repeatedly. Without the `dev` profile, `bootRun` starts against
+whatever's already in the DB (empty, on a fresh Postgres).
 
 `spring.datasource.*` in `application.properties` defaults to
 `localhost:5433` (overridable via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` env
