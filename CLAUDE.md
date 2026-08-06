@@ -10,10 +10,12 @@ Appointment — with double-booking prevented at the database level, not just
 in application code.
 
 **Status:** design phase complete. Local Postgres, initial Flyway
-migrations, JPA entities/repositories, duration resolution, and
-availability search are in place — all verified against real Postgres via
-Testcontainers. No booking (hold/confirm), reconciliation, controllers, or
-frontend exist yet — hold/confirm booking is the next task.
+migrations, JPA entities/repositories, duration resolution, availability
+search, and hold/confirm booking are in place — including a concurrency
+test proving the double-booking guarantee (20 concurrent hold requests for
+the same slot, exactly one wins) against real Postgres. No resource-
+unavailability reconciliation, controllers, or frontend exist yet —
+reconciliation is the next task.
 
 ## 2. Tech Stack
 
@@ -32,10 +34,10 @@ frontend exist yet — hold/confirm booking is the next task.
 ## 3. Dev Commands
 
 ```bash
-docker compose up -d   # start local Postgres (host port 5433, see docker-compose.yml)
+docker compose up -d   # start local Postgres (host port 5433, see docker-compose.yml) — only needed for bootRun and contextLoads()
 ./gradlew build         # compile + package
 ./gradlew bootRun       # run the API locally against the Postgres above
-./gradlew test          # unit + integration tests (Testcontainers not added yet — currently uses the same local Postgres)
+./gradlew test          # unit tests + Testcontainers-backed integration tests (spin up their own ephemeral Postgres — Docker must be running, but not docker-compose)
 ```
 
 `spring.datasource.*` in `application.properties` defaults to

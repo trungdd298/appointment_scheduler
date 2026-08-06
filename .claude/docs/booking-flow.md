@@ -61,19 +61,89 @@ side of browse-then-commit:
 3. Enumerate candidate start times in 15-minute steps across
    `near ± windowHours` (see [assumptions.md](assumptions.md) #7).
 4. Keep a candidate only if it fits within the dealership's open hours for
-   that single day (#8), **and** `AppointmentRepository.existsFreeBay`
-   holds (at least one active bay with no overlapping `HELD`/`CONFIRMED`
-   appointment or `resource_unavailability`) for that window.
+   that single day (#8), **and** `AppointmentRepository.findFreeBayIds`
+   returns at least one active bay with no overlapping `HELD`/`CONFIRMED`
+   appointment or `resource_unavailability` for that window.
 5. For each qualified technician, keep the `(time, technician)` pair if
    `AppointmentRepository.isTechnicianFree` also holds for that technician.
 
-`existsFreeBay`/`isTechnicianFree` are native queries using Postgres'
+`findFreeBayIds`/`isTechnicianFree` are native queries using Postgres'
 `tstzrange &&` operator directly against `during` — see
 [data-model.md](data-model.md#jpa-mapping-notes) for why that column isn't
 mapped as a Java property. Verified against real Postgres in
 `AvailabilityServiceIT` (business-hours boundary, existing-appointment
 conflict, `resource_unavailability` conflict, unqualified-technician
 exclusion).
+
+## Hold/Confirm — implementation
+
+`BookingService` is the "best-effort, purely for UX" application layer
+described in
+[architecture.md](architecture.md#concurrency-correctness-defense-in-depth)
+— it does no pre-insert locking. The actual guarantee is the
+`no_overlap_per_bay`/`no_overlap_per_technician` `EXCLUDE` constraints;
+this class only searches for a plausible candidate and lets Postgres
+arbitrate.
+
+**`hold(HoldCommand)`:**
+1. Validate dealership/vehicle/customer/serviceType/technician exist (404
+   `NOT_FOUND`).
+2. Validate the technician is qualified via
+   `TechnicianRepository.findQualifiedActive` — this single membership
+   check also confirms the technician belongs to the requested dealership,
+   so there's no separate lazy `technician.getDealership()` access (422
+   `TECHNICIAN_NOT_QUALIFIED` otherwise).
+3. Resolve duration, check business hours (`VALIDATION_ERROR` if outside).
+4. Check the technician is free (`SLOT_NO_LONGER_AVAILABLE` if not) — the
+   technician is the client's explicit choice, so unlike the bay there's no
+   retry against a different technician.
+5. Enumerate candidate bay IDs via `findFreeBayIds`, then attempt an
+   `INSERT` per candidate, each in its **own `REQUIRES_NEW` transaction**
+   (bounded at `MAX_BAY_RETRY_ATTEMPTS`), catching
+   `DataAccessException` broadly (a clean `EXCLUDE` violation is
+   `DataIntegrityViolationException`, but Postgres can also report a
+   genuine `deadlock_detected` — `CannotAcquireLockException` — while
+   checking the constraint under heavy concurrency; both mean "this
+   attempt didn't work," so both just move to the next candidate) and
+   moving to the next candidate on failure. `SLOT_NO_LONGER_AVAILABLE` if
+   every attempt fails.
+
+**Why `REQUIRES_NEW` per attempt, not a shared transaction:** Postgres
+aborts a transaction outright after *any* SQL error, including an
+`EXCLUDE` constraint violation — reusing one transaction across attempts
+would make every attempt after the first fail regardless of whether that
+candidate bay was actually free. Each attempt therefore runs via a
+`TransactionTemplate` (programmatic, not `@Transactional` on a sibling
+method — a same-bean call would silently skip the AOP proxy and the new
+propagation would never take effect).
+
+**Why `hold()` itself isn't `@Transactional`:** wrapping the outer method
+would hold one pooled connection for its whole duration while each
+`REQUIRES_NEW` attempt inside it checks out a second — doubling connection
+usage for no correctness benefit (the reads don't need a consistent
+snapshot; the constraint is the real guarantee). This was caught by
+`BookingConcurrencyIT` exhausting the connection pool before the fix.
+
+**`confirm(appointmentId, holdToken)`:** token match (404
+`HOLD_TOKEN_MISMATCH`) → idempotent no-op if already `CONFIRMED` → 410
+`HOLD_EXPIRED` if not `HELD` or past `expires_at` (lazily transitioning to
+`EXPIRED` first). That status write uses
+`@Transactional(noRollbackFor = HoldExpiredException.class)` — Spring
+rolls back the whole method on any unchecked exception by default, which
+would otherwise silently discard the `EXPIRED` write right before the
+throw.
+
+**Hold-expiry sweep:** `HoldExpirySweeper` runs
+`AppointmentRepository.expireStaleHolds` (a bulk update) every 30s — a
+`HELD` row past its TTL still satisfies the `EXCLUDE` constraints (they
+don't check `expires_at`), so this sweep is what actually releases the
+slot for other bookers.
+
+**Concurrency proof:** `BookingConcurrencyIT` fires 20 concurrent
+`hold()` calls at the exact same slot on a dealership with a single bay —
+exactly one wins, the other 19 get `SlotNoLongerAvailableException`, and
+only one row occupies the slot in the database afterward. This is the
+actual evidence for the double-booking guarantee, not just the schema.
 
 ## Endpoint reference
 
