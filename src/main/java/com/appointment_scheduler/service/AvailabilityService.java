@@ -11,10 +11,8 @@ import com.appointment_scheduler.repository.VehicleRefRepository;
 import com.appointment_scheduler.service.dto.AvailabilitySlot;
 import com.appointment_scheduler.service.exception.ResourceNotFoundException;
 import java.time.Duration;
-import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -77,8 +75,10 @@ public class AvailabilityService {
         OffsetDateTime candidateStart = alignToGranularity(windowStart);
         while (!candidateStart.isAfter(windowEnd)) {
             OffsetDateTime candidateEnd = candidateStart.plus(duration);
-            if (isWithinBusinessHours(dealership, candidateStart, candidateEnd)
-                    && appointmentRepository.existsFreeBay(dealershipId, candidateStart, candidateEnd)) {
+            if (BusinessHours.fits(dealership, candidateStart, candidateEnd)
+                    && !appointmentRepository
+                            .findFreeBayIds(dealershipId, candidateStart, candidateEnd)
+                            .isEmpty()) {
                 for (Technician technician : qualifiedTechnicians) {
                     if (appointmentRepository.isTechnicianFree(
                             technician.getId(), candidateStart, candidateEnd)) {
@@ -91,26 +91,6 @@ public class AvailabilityService {
             candidateStart = candidateStart.plus(SLOT_GRANULARITY);
         }
         return results;
-    }
-
-    /**
-     * Requires the candidate to start and end within a single day's open
-     * hours — an appointment crossing midnight into a different
-     * open/closed day is never offered. Reasonable for service-appointment
-     * durations (minutes to a few hours); documented in
-     * .claude/docs/assumptions.md.
-     */
-    private boolean isWithinBusinessHours(Dealership dealership, OffsetDateTime start, OffsetDateTime end) {
-        short isoDayOfWeek = (short) start.getDayOfWeek().getValue(); // Monday = 1 .. Sunday = 7
-        boolean dayOpen = Arrays.asList(dealership.getDaysOpen()).contains(isoDayOfWeek);
-        if (!dayOpen) {
-            return false;
-        }
-        LocalTime startTime = start.toLocalTime();
-        LocalTime endTime = end.toLocalTime();
-        return !endTime.isBefore(startTime) // rejects candidates whose duration wraps past midnight
-                && !startTime.isBefore(dealership.getOpensAt())
-                && !endTime.isAfter(dealership.getClosesAt());
     }
 
     private OffsetDateTime alignToGranularity(OffsetDateTime time) {

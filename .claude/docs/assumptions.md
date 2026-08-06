@@ -30,4 +30,8 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
    A candidate whose duration would cross midnight into a different
    open/closed day is never offered, rather than checking the next day's
    hours too. Reasonable given service-appointment durations are minutes to
-   a few hours. See `AvailabilityService.isWithinBusinessHours`.
+   a few hours. See `BusinessHours.fits`.
+9. **Bay retry is bounded at 10 candidate bays per hold attempt.** Not
+   specified beyond design-decisions' "bounded number of times" — 10 is
+   well above any realistic per-dealership bay count, so it only limits
+   pathological cases. See `BookingService.MAX_BAY_RETRY_ATTEMPTS`.
