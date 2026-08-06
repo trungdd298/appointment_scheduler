@@ -149,6 +149,10 @@ actual evidence for the double-booking guarantee, not just the schema.
 
 | Endpoint | Controller | Purpose |
 |---|---|---|
+| `GET /dealerships` | `ReferenceDataController` | List dealerships — not in the original scope, added for FE pickers (see below) |
+| `GET /service-types` | `ReferenceDataController` | List service types |
+| `GET /vehicles` | `ReferenceDataController` | List vehicles |
+| `GET /customers` | `ReferenceDataController` | List customers |
 | `GET /dealerships/{id}/availability` | `AvailabilityController` | Browse feasible `(time, technician)` options near a desired time |
 | `POST /appointments/hold` | `AppointmentController` | Reserve a specific slot; server assigns the bay |
 | `POST /appointments/{id}/confirm` | `AppointmentController` | Finalize a hold using its `hold_token` |
@@ -170,6 +174,14 @@ record per `openapi.yaml` schema — field-for-field, including the rule that
 DTO mapping nulls them out otherwise, per the documented API contract).
 `GET /availability` reuses `service.dto.AvailabilitySlot` directly rather
 than a separate web DTO — the shapes are already identical.
+
+`ReferenceDataController` (`GET /dealerships`, `/service-types`,
+`/vehicles`, `/customers`) is a small, deliberate scope addition beyond the
+original scenario brief: the booking flow otherwise requires the client to
+already know raw dealership/vehicle/serviceType/customer IDs, which a real
+frontend can't do without *some* way to list them. Plain `findAll()` reads,
+no new business logic — see `WebConfig` for the CORS config that lets the
+local Vite dev server call them.
 
 `GlobalExceptionHandler` (`@RestControllerAdvice`) is the single place
 mapping every service-layer exception to the documented
