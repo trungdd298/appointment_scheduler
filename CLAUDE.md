@@ -9,15 +9,18 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** design phase complete (`docs/`), implementation not started yet.
-`build.gradle` currently references invalid Spring Boot artifact coordinates
-and will not build — this is the first pending task. No migrations,
-entities, controllers, or frontend exist yet.
+**Status:** design phase complete, implementation not started yet.
+`build.gradle` builds and packages cleanly as-is (`./gradlew build`) — the
+default `contextLoads` test is the only failure, and only because no
+Postgres/DataSource is configured yet. No migrations, entities,
+controllers, or frontend exist yet; local Postgres + the first Flyway
+migration is the next pending task.
 
 ## 2. Tech Stack
 
-- Java 17, Spring Boot 3.x (current `build.gradle` incorrectly pins `4.1.0`
-  and non-existent starters — pending fix)
+- Java 17, Spring Boot 4.1.0 (confirmed buildable; note Boot 4's starter
+  split — `spring-boot-starter-web` vs `spring-boot-starter-webmvc` — and
+  its per-module `-test` starters, e.g. `spring-boot-starter-data-jpa-test`)
 - Gradle (wrapper included, no local install needed)
 - PostgreSQL 14+ (requires `btree_gist` and `pgcrypto` extensions)
 - Spring Data JPA, Flyway (schema migrations)
@@ -26,17 +29,18 @@ entities, controllers, or frontend exist yet.
 
 ## 3. Dev Commands
 
-Not yet functional end-to-end — this is the target workflow once the
-pending build fix and initial migrations land.
+`./gradlew build`/`compileJava` work today. `bootRun` and `test` need a
+Postgres connection first — this is the target workflow once local Postgres
+and the initial migrations land.
 
 ```bash
-./gradlew build     # compile + run tests
-./gradlew bootRun   # run the API locally (needs Postgres on localhost)
-./gradlew test      # unit + integration tests (Testcontainers provides its own Postgres)
+./gradlew build     # compile + package (works today)
+./gradlew bootRun   # run the API locally (needs Postgres on localhost — not set up yet)
+./gradlew test      # unit + integration tests (Testcontainers provides its own Postgres — not added yet)
 ```
 
-No `docker-compose.yml` exists yet for local Postgres — add it alongside the
-build fix.
+No `docker-compose.yml` exists yet for local Postgres — that's the next
+pending task.
 
 ## 4. Core Logic Summary
 
