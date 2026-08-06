@@ -13,6 +13,12 @@ servers:
   - url: https://api.example.com/v1
 
 tags:
+  - name: Reference Data
+    description: >
+      Read-only listing endpoints for booking-form pickers. Not part of the
+      original scenario brief — added so a frontend has something to
+      populate dropdowns from instead of requiring raw IDs. See
+      booking-flow.md.
   - name: Availability
   - name: Appointments
   - name: Ops
@@ -20,6 +26,61 @@ tags:
     description: Internal endpoints used by other services (mocked within the scope of this assessment)
 
 paths:
+  # ---------------------------------------------------------------------
+  # Reference Data — read-only lookups for booking-form pickers
+  # ---------------------------------------------------------------------
+  /dealerships:
+    get:
+      tags: [Reference Data]
+      summary: List all dealerships
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Dealership" }
+
+  /service-types:
+    get:
+      tags: [Reference Data]
+      summary: List all service types
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ServiceType" }
+
+  /vehicles:
+    get:
+      tags: [Reference Data]
+      summary: List all vehicles
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Vehicle" }
+
+  /customers:
+    get:
+      tags: [Reference Data]
+      summary: List all customers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Customer" }
+
   # ---------------------------------------------------------------------
   # Availability — browse before committing
   # ---------------------------------------------------------------------
@@ -277,6 +338,48 @@ paths:
 
 components:
   schemas:
+    Dealership:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        opensAt: { type: string, format: partial-time, example: "08:00:00" }
+        closesAt: { type: string, format: partial-time, example: "18:00:00" }
+        daysOpen:
+          type: array
+          description: ISO 8601 weekday numbers, Monday = 1 .. Sunday = 7
+          items: { type: integer, minimum: 1, maximum: 7 }
+
+    ServiceType:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        durationMinutes: { type: integer }
+
+    VehicleCategory:
+      type: string
+      enum: [SEDAN, SUV, TRUCK, VAN]
+
+    Vehicle:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        vin: { type: string }
+        make: { type: string }
+        model: { type: string }
+        vehicleCategory:
+          allOf: [{ $ref: "#/components/schemas/VehicleCategory" }]
+          nullable: true
+          description: null if not yet synced from the Vehicle Registry
+
+    Customer:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        phone: { type: string }
+
     AvailabilitySlot:
       type: object
       properties:

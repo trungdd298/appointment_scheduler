@@ -11,11 +11,13 @@ in application code.
 
 **Status:** the full API is implemented, seeded, and runnable end-to-end —
 Postgres, migrations, entities/repositories, all domain services, REST
-controllers matching `openapi.yaml`, and dev seed data, all verified
-against real Postgres (including a concurrency test proving the
-double-booking guarantee, and a manual smoke test of the real hold → confirm
-→ double-booking-rejected flow via curl against a running `bootRun`
-instance). No frontend exists yet — that's the next task.
+controllers matching `openapi.yaml` (plus small `GET` reference-data
+listing endpoints added for frontend pickers, beyond the original scenario
+scope), and dev seed data, all verified against real Postgres (including a
+concurrency test proving the double-booking guarantee, and a manual smoke
+test of the real hold → confirm → double-booking-rejected flow via curl
+against a running `bootRun` instance). No frontend exists yet — that's the
+next task.
 
 ## 2. Tech Stack
 
