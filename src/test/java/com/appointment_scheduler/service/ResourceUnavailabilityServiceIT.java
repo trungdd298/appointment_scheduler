@@ -107,7 +107,14 @@ class ResourceUnavailabilityServiceIT {
     }
 
     private OffsetDateTime tomorrowAt(int hour, int minute) {
-        return OffsetDateTime.now().plusDays(1).withHour(hour).withMinute(minute).withSecond(0).withNano(0);
+        // Explicit UTC, not the JVM default zone: BusinessHours normalizes to
+        // UTC before comparing wall-clock times, so tests must too.
+        return OffsetDateTime.now(java.time.ZoneOffset.UTC)
+                .plusDays(1)
+                .withHour(hour)
+                .withMinute(minute)
+                .withSecond(0)
+                .withNano(0);
     }
 
     private Appointment confirmedAppointment(ServiceBay bay, Technician technician, OffsetDateTime start) {

@@ -49,3 +49,16 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
     be actively wrong, so it falls back to the same ops-escalation path
     technician unavailability uses. See
     `ResourceUnavailabilityService.reconcileBayUnavailability`.
+12. **"Single timezone" (an existing assumption) is pinned to UTC for
+    business-hours purposes.** `dealership.opens_at`/`closes_at` are plain
+    wall-clock times with no zone of their own; every incoming
+    `OffsetDateTime` is normalized to UTC before extracting a wall-clock
+    time or day-of-week, so the result doesn't depend on which equivalent
+    offset a client sends for the same instant (e.g. `10:00+07:00` vs
+    `03:00Z`). This was a real bug, not just an unstated assumption — found
+    via `AppointmentApiIT`: requests that go through actual JSON
+    (de)serialization behave differently from `OffsetDateTime` objects
+    built directly in Java, because Jackson normalizes the offset on
+    deserialization by default. Every prior test happened to pass only
+    because the JVM's default zone offset matched what those tests
+    constructed directly. See `BusinessHours.SYSTEM_ZONE`.
