@@ -9,12 +9,10 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** design phase complete, implementation not started yet.
-`build.gradle` builds and packages cleanly as-is (`./gradlew build`) — the
-default `contextLoads` test is the only failure, and only because no
-Postgres/DataSource is configured yet. No migrations, entities,
-controllers, or frontend exist yet; local Postgres + the first Flyway
-migration is the next pending task.
+**Status:** design phase complete. Local Postgres (`docker-compose.yml`)
+and the initial Flyway migrations are in place and verified against a real
+Postgres 16 instance. No entities, controllers, services, or frontend exist
+yet — that's the next task.
 
 ## 2. Tech Stack
 
@@ -29,18 +27,16 @@ migration is the next pending task.
 
 ## 3. Dev Commands
 
-`./gradlew build`/`compileJava` work today. `bootRun` and `test` need a
-Postgres connection first — this is the target workflow once local Postgres
-and the initial migrations land.
-
 ```bash
-./gradlew build     # compile + package (works today)
-./gradlew bootRun   # run the API locally (needs Postgres on localhost — not set up yet)
-./gradlew test      # unit + integration tests (Testcontainers provides its own Postgres — not added yet)
+docker compose up -d   # start local Postgres (host port 5433, see docker-compose.yml)
+./gradlew build         # compile + package
+./gradlew bootRun       # run the API locally against the Postgres above
+./gradlew test          # unit + integration tests (Testcontainers not added yet — currently uses the same local Postgres)
 ```
 
-No `docker-compose.yml` exists yet for local Postgres — that's the next
-pending task.
+`spring.datasource.*` in `application.properties` defaults to
+`localhost:5433` (overridable via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` env
+vars) to match `docker-compose.yml`.
 
 ## 4. Core Logic Summary
 
@@ -57,8 +53,7 @@ pending task.
   client-chosen.** `GET /availability` returns `(startTime, technicianId)`
   pairs, never bays.
 - **Duration = `ServiceType.durationMinutes`, overridden per vehicle
-  category** if a row exists in `service_type_duration_override`. Planned
-  addition, not yet migrated — see
+  category** if a row exists in `service_type_duration_override` — see
   [data-model.md](.claude/docs/data-model.md).
 - **Resource-unavailability reconciliation differs by resource type.** Bay
   becomes unavailable after confirmation → silently reassigned. Technician
@@ -109,6 +104,6 @@ Do not do any of the following without discussing first:
   naming convention and workflow
 - [`.claude/docs/openapi.yaml`](.claude/docs/openapi.yaml) — full API
   contract
-- [`.claude/docs/schema.sql`](.claude/docs/schema.sql) — full DDL (not yet
-  migrated; pending: dealership hours, `vehicle_category`, duration
-  override table)
+- [`.claude/docs/schema.sql`](.claude/docs/schema.sql) — full DDL,
+  consolidated copy of the Flyway migrations under
+  `src/main/resources/db/migration/`

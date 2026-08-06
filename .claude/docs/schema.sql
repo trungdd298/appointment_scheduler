@@ -4,12 +4,11 @@
 -- See data-model.md, architecture.md, and reconciliation.md for the
 -- reasoning behind each decision.
 --
--- NOT YET MIGRATED — this file is the target/reference schema. Flyway
--- migrations under src/main/resources/db/migration/ are the actual source
--- of truth once implementation starts; keep this file in sync with them.
--- Planned additions not yet reflected below: dealership hours
--- (opens_at/closes_at/days_open), vehicle_ref.vehicle_category, and
--- service_type_duration_override — see data-model.md.
+-- This is a reference copy, consolidated for readability. The actual
+-- source of truth is the Flyway migrations under
+-- src/main/resources/db/migration/ (V1__initial_schema.sql +
+-- V2__dealership_hours_and_duration_override.sql) — keep this file in
+-- sync with them whenever a new migration lands.
 -- =====================================================================
 
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- required for mixed EXCLUDE (= and &&)
@@ -20,14 +19,30 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;     -- for gen_random_uuid()
 -- ---------------------------------------------------------------------
 
 CREATE TABLE dealership (
-    id    BIGSERIAL PRIMARY KEY,
-    name  TEXT NOT NULL
+    id         BIGSERIAL PRIMARY KEY,
+    name       TEXT NOT NULL,
+    opens_at   TIME NOT NULL,
+    closes_at  TIME NOT NULL,
+    -- ISO 8601 weekday numbers, Monday = 1 .. Sunday = 7. No default on
+    -- any of the three hours columns — every dealership must declare its
+    -- hours explicitly rather than silently inheriting a guess.
+    days_open  SMALLINT[] NOT NULL,
+    CONSTRAINT chk_dealership_hours_order CHECK (closes_at > opens_at)
 );
 
 CREATE TABLE service_type (
     id                BIGSERIAL PRIMARY KEY,
     name              TEXT NOT NULL,               -- "Oil Change"
     duration_minutes  INT  NOT NULL CHECK (duration_minutes > 0)
+);
+
+CREATE TYPE vehicle_category AS ENUM ('SEDAN', 'SUV', 'TRUCK', 'VAN');
+
+CREATE TABLE service_type_duration_override (
+    service_type_id   BIGINT NOT NULL REFERENCES service_type(id),
+    vehicle_category  vehicle_category NOT NULL,
+    duration_minutes  INT NOT NULL CHECK (duration_minutes > 0),
+    PRIMARY KEY (service_type_id, vehicle_category)
 );
 
 CREATE TABLE service_bay (
@@ -57,10 +72,14 @@ CREATE TABLE technician_service_type (
 -- Local projection: the source of truth is the Vehicle Registry (shared
 -- across Supply/Demand/Operate domains), out of scope.
 CREATE TABLE vehicle_ref (
-    id     BIGSERIAL PRIMARY KEY,
-    vin    TEXT NOT NULL UNIQUE,
-    make   TEXT,
-    model  TEXT
+    id                BIGSERIAL PRIMARY KEY,
+    vin               TEXT NOT NULL UNIQUE,
+    make              TEXT,
+    model             TEXT,
+    -- Nullable: a synced row may not carry a category yet. Duration
+    -- resolution falls back to service_type.duration_minutes whenever
+    -- this is NULL or has no matching override row.
+    vehicle_category  vehicle_category
 );
 
 -- Local projection: the source of truth is the Customer/Account Directory,
