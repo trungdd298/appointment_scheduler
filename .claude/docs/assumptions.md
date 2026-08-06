@@ -22,3 +22,12 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
 6. **Full auto-reassignment and customer notification are designed only,
    not implemented.** See
    [reconciliation.md](reconciliation.md#whats-not-implemented).
+7. **Availability candidates are stepped at 15-minute increments.** Not
+   specified in the original brief; a reasonable default for service
+   scheduling. Not configurable — nothing in scope calls for finer
+   granularity. See `AvailabilityService.SLOT_GRANULARITY`.
+8. **An appointment must start and end within a single day's open hours.**
+   A candidate whose duration would cross midnight into a different
+   open/closed day is never offered, rather than checking the next day's
+   hours too. Reasonable given service-appointment durations are minutes to
+   a few hours. See `AvailabilityService.isWithinBusinessHours`.

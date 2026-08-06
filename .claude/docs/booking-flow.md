@@ -47,6 +47,34 @@ idempotent against client retries.
 (See [data-model.md](data-model.md) for the override table and
 `vehicle_ref.vehicle_category` column.)
 
+Implemented as `DurationResolver` under `com.appointment_scheduler.service`.
+
+## Availability search — implementation
+
+`AvailabilityService.findAvailability` implements the `GET /availability`
+side of browse-then-commit:
+
+1. Resolve duration via `DurationResolver`.
+2. Look up active technicians at the dealership qualified for the service
+   type (`TechnicianRepository.findQualifiedActive`) — if none, return no
+   slots.
+3. Enumerate candidate start times in 15-minute steps across
+   `near ± windowHours` (see [assumptions.md](assumptions.md) #7).
+4. Keep a candidate only if it fits within the dealership's open hours for
+   that single day (#8), **and** `AppointmentRepository.existsFreeBay`
+   holds (at least one active bay with no overlapping `HELD`/`CONFIRMED`
+   appointment or `resource_unavailability`) for that window.
+5. For each qualified technician, keep the `(time, technician)` pair if
+   `AppointmentRepository.isTechnicianFree` also holds for that technician.
+
+`existsFreeBay`/`isTechnicianFree` are native queries using Postgres'
+`tstzrange &&` operator directly against `during` — see
+[data-model.md](data-model.md#jpa-mapping-notes) for why that column isn't
+mapped as a Java property. Verified against real Postgres in
+`AvailabilityServiceIT` (business-hours boundary, existing-appointment
+conflict, `resource_unavailability` conflict, unqualified-technician
+exclusion).
+
 ## Endpoint reference
 
 | Endpoint | Purpose |
