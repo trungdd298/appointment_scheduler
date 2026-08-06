@@ -10,10 +10,10 @@ Appointment — with double-booking prevented at the database level, not just
 in application code.
 
 **Status:** design phase complete. Local Postgres, initial Flyway
-migrations, JPA entities, and repositories are in place — all verified
-against real Postgres via Testcontainers, including the riskier mappings
-(the `smallint[]` array column, the native Postgres enum type). No
-services, controllers, or frontend exist yet — that's the next task.
+migrations, JPA entities/repositories, duration resolution, and
+availability search are in place — all verified against real Postgres via
+Testcontainers. No booking (hold/confirm), reconciliation, controllers, or
+frontend exist yet — hold/confirm booking is the next task.
 
 ## 2. Tech Stack
 
