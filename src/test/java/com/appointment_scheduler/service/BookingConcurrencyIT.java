@@ -100,7 +100,15 @@ class BookingConcurrencyIT {
         VehicleRef vehicle = vehicleRefRepository.saveAndFlush(VehicleRef.builder().vin("VIN-CONCURRENCY").build());
         CustomerRef customer = customerRefRepository.saveAndFlush(CustomerRef.builder().name("Jamie Rivera").build());
 
-        OffsetDateTime start = OffsetDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        // Explicit UTC, not the JVM default zone: BusinessHours normalizes to
+        // UTC before comparing wall-clock times, so tests must too.
+        OffsetDateTime start =
+                OffsetDateTime.now(java.time.ZoneOffset.UTC)
+                        .plusDays(1)
+                        .withHour(10)
+                        .withMinute(0)
+                        .withSecond(0)
+                        .withNano(0);
         HoldCommand command =
                 new HoldCommand(dealership.getId(), vehicle.getId(), customer.getId(), serviceType.getId(), start, technician.getId());
 

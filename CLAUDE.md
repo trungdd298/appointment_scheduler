@@ -9,13 +9,12 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** design phase complete. Local Postgres, initial Flyway
-migrations, JPA entities/repositories, duration resolution, availability
-search, hold/confirm booking, and resource-unavailability reconciliation
-are all in place and verified against real Postgres — including a
-concurrency test proving the double-booking guarantee (20 concurrent hold
-requests for the same slot, exactly one wins). No REST controllers, seed
-data, or frontend exist yet — controllers are the next task.
+**Status:** the full API is implemented and runnable end-to-end — Postgres,
+migrations, entities/repositories, all domain services, and REST
+controllers matching `openapi.yaml`, all verified against real Postgres
+(including a concurrency test proving the double-booking guarantee: 20
+concurrent hold requests for the same slot, exactly one wins). No seed data
+or frontend exist yet — seed data is the next task.
 
 ## 2. Tech Stack
 
@@ -29,6 +28,12 @@ data, or frontend exist yet — controllers are the next task.
   Spring Boot's dependency-management BOM — note Testcontainers 2.x
   renamed modules, e.g. `org.testcontainers:testcontainers-postgresql`,
   not `org.testcontainers:postgresql`)
+- **Jackson 3** (`tools.jackson:jackson-databind`, package
+  `tools.jackson.databind.*`) — not Jackson 2
+  (`com.fasterxml.jackson.databind.*`), which Boot 4.1 no longer uses for
+  the core databind library. `jackson-annotations` (`@JsonProperty` etc.)
+  is still `com.fasterxml.jackson.annotation.*`, unchanged — only
+  core/databind moved.
 - Frontend (planned, not yet scaffolded): React + TypeScript + Vite
 
 ## 3. Dev Commands
@@ -36,9 +41,13 @@ data, or frontend exist yet — controllers are the next task.
 ```bash
 docker compose up -d   # start local Postgres (host port 5433, see docker-compose.yml) — only needed for bootRun and contextLoads()
 ./gradlew build         # compile + package
-./gradlew bootRun       # run the API locally against the Postgres above
+./gradlew bootRun       # run the API locally on :8080 against the Postgres above
 ./gradlew test          # unit tests + Testcontainers-backed integration tests (spin up their own ephemeral Postgres — Docker must be running, but not docker-compose)
 ```
+
+The API is fully wired (see `.claude/docs/openapi.yaml`), but there's no
+seed data yet — `bootRun` starts against an empty schema, so every endpoint
+will 404 until seed data (or a manual insert) exists.
 
 `spring.datasource.*` in `application.properties` defaults to
 `localhost:5433` (overridable via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` env

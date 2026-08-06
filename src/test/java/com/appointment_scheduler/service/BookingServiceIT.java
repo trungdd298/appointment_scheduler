@@ -108,7 +108,9 @@ class BookingServiceIT {
     }
 
     private OffsetDateTime tomorrowAt(int hour, int minute) {
-        return OffsetDateTime.now()
+        // Explicit UTC, not the JVM default zone: BusinessHours normalizes to
+        // UTC before comparing wall-clock times, so tests must too.
+        return OffsetDateTime.now(java.time.ZoneOffset.UTC)
                 .plusDays(1)
                 .withHour(hour)
                 .withMinute(minute)

@@ -256,4 +256,31 @@ public class BookingService {
         appointment.setExpiresAt(null);
         return appointmentRepository.saveAndFlush(appointment);
     }
+
+    /**
+     * Only reachable from HELD or CONFIRMED, matching the documented state
+     * diagram (.claude/docs/booking-flow.md) — CANCELLED is reachable from
+     * NEEDS_ATTENTION only via the escalation sweep, not this direct path.
+     */
+    @Transactional
+    public Appointment cancel(Long appointmentId) {
+        Appointment appointment =
+                appointmentRepository
+                        .findByIdWithAssociations(appointmentId)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Appointment " + appointmentId + " not found"));
+
+        if (appointment.getStatus() != AppointmentStatus.HELD
+                && appointment.getStatus() != AppointmentStatus.CONFIRMED) {
+            throw new ValidationException(
+                    "Appointment "
+                            + appointmentId
+                            + " cannot be cancelled from status "
+                            + appointment.getStatus());
+        }
+
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        appointment.setExpiresAt(null);
+        return appointmentRepository.saveAndFlush(appointment);
+    }
 }

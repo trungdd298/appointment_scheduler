@@ -147,16 +147,57 @@ actual evidence for the double-booking guarantee, not just the schema.
 
 ## Endpoint reference
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /dealerships/{id}/availability` | Browse feasible `(time, technician)` options near a desired time |
-| `POST /appointments/hold` | Reserve a specific slot; server assigns the bay |
-| `POST /appointments/{id}/confirm` | Finalize a hold using its `hold_token` |
-| `GET /appointments/{id}` | Fetch one appointment |
-| `POST /appointments/{id}/cancel` | Cancel (customer or ops) |
-| `GET /appointments?status=&dealershipId=&vin=` | List/filter — ops queue and VIN lookup |
-| `POST /appointments/{id}/reassign-technician` | Ops resolves a `NEEDS_ATTENTION` appointment |
-| `POST /internal/resource-unavailability` | Mocked webhook from Staff/Facility systems |
+| Endpoint | Controller | Purpose |
+|---|---|---|
+| `GET /dealerships/{id}/availability` | `AvailabilityController` | Browse feasible `(time, technician)` options near a desired time |
+| `POST /appointments/hold` | `AppointmentController` | Reserve a specific slot; server assigns the bay |
+| `POST /appointments/{id}/confirm` | `AppointmentController` | Finalize a hold using its `hold_token` |
+| `GET /appointments/{id}` | `AppointmentController` | Fetch one appointment |
+| `POST /appointments/{id}/cancel` | `AppointmentController` | Cancel (customer or ops); only from `HELD`/`CONFIRMED` |
+| `GET /appointments?status=&dealershipId=&vin=` | `AppointmentController` | List/filter — ops queue and VIN lookup |
+| `POST /appointments/{id}/reassign-technician` | `OpsController` | Ops resolves a `NEEDS_ATTENTION` appointment |
+| `POST /internal/resource-unavailability` | `IntegrationController` | Mocked webhook from Staff/Facility systems |
 
 Full contract: [`openapi.yaml`](openapi.yaml).
 See also: [architecture.md](architecture.md) (concurrency), [assumptions.md](assumptions.md) (scope cuts).
+
+## REST layer — implementation
+
+Request/response DTOs live under `com.appointment_scheduler.web.dto`, one
+record per `openapi.yaml` schema — field-for-field, including the rule that
+`holdToken`/`expiresAt` are only populated in `AppointmentResponse` while
+`status = HELD` (the underlying DB columns are populated regardless; the
+DTO mapping nulls them out otherwise, per the documented API contract).
+`GET /availability` reuses `service.dto.AvailabilitySlot` directly rather
+than a separate web DTO — the shapes are already identical.
+
+`GlobalExceptionHandler` (`@RestControllerAdvice`) is the single place
+mapping every service-layer exception to the documented
+`(HTTP status, error code)` pair from the `ErrorResponse` schema — see the
+class for the full table. Bean-validation failures
+(`MethodArgumentNotValidException`, `ConstraintViolationException`,
+`MissingServletRequestParameterException`) and malformed JSON
+(`HttpMessageNotReadableException`) all map to `400 VALIDATION_ERROR`.
+
+`POST /internal/resource-unavailability` needs to return `201` on a new
+event and `200` on a replay (per `openapi.yaml`), but
+`ResourceUnavailabilityService.recordUnavailability` only returns the row,
+not whether it was new — `IntegrationController` does its own
+`findByExternalEventId` check first purely to pick the status code, ahead
+of the service's own (separately correct) idempotency check.
+
+**Bug found via `AppointmentApiIT`, not caught by any service-layer test:**
+requests that go through actual JSON serialization behave differently from
+`OffsetDateTime` objects built directly in Java in a test — Jackson
+normalizes the offset on deserialization by default, and `BusinessHours`
+was reading wall-clock time off the *raw* offset. Every prior test passed
+only by coincidence (the JVM's default zone offset matched what those
+tests constructed directly). Fixed by normalizing to a fixed zone (UTC)
+before any wall-clock extraction — see
+[assumptions.md](assumptions.md) #12. This is exactly why the API layer
+needs its own tests that go through real (de)serialization, not just
+service-layer tests that never leave Java objects.
+
+Verified end-to-end (real HTTP requests via `MockMvc`, real Postgres via
+Testcontainers) in `AppointmentApiIT`: one happy-path test per endpoint
+plus the HTTP status mapping for each error case.

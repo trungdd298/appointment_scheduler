@@ -1,6 +1,7 @@
 package com.appointment_scheduler.repository;
 
 import com.appointment_scheduler.domain.Appointment;
+import com.appointment_scheduler.domain.AppointmentStatus;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -143,4 +144,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                     + "WHERE a.status = com.appointment_scheduler.domain.AppointmentStatus.NEEDS_ATTENTION "
                     + "AND a.escalationDeadline < :now")
     int cancelUnresolvedEscalations(@Param("now") OffsetDateTime now);
+
+    /**
+     * Backs GET /appointments — the ops queue (?status=NEEDS_ATTENTION) and
+     * VIN lookup (?vin=..., forward-compatible with the future Document
+     * Viewer). Each filter is optional; a null parameter matches everything.
+     */
+    @Query(
+            "SELECT a FROM Appointment a "
+                    + "JOIN FETCH a.dealership JOIN FETCH a.bay JOIN FETCH a.technician "
+                    + "JOIN FETCH a.vehicle JOIN FETCH a.customer JOIN FETCH a.serviceType "
+                    + "WHERE (:status IS NULL OR a.status = :status) "
+                    + "AND (:dealershipId IS NULL OR a.dealership.id = :dealershipId) "
+                    + "AND (:vin IS NULL OR a.vehicle.vin = :vin) "
+                    + "ORDER BY a.startTime ASC")
+    List<Appointment> findByFilters(
+            @Param("status") AppointmentStatus status,
+            @Param("dealershipId") Long dealershipId,
+            @Param("vin") String vin);
 }
