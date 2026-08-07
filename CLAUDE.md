@@ -9,15 +9,15 @@ Technician for the full service duration, then creates a persistent
 Appointment — with double-booking prevented at the database level, not just
 in application code.
 
-**Status:** the full API is implemented, seeded, and runnable end-to-end —
-Postgres, migrations, entities/repositories, all domain services, REST
-controllers matching `openapi.yaml` (plus small `GET` reference-data
-listing endpoints added for frontend pickers, beyond the original scenario
-scope), and dev seed data, all verified against real Postgres (including a
-concurrency test proving the double-booking guarantee, and a manual smoke
-test of the real hold → confirm → double-booking-rejected flow via curl
-against a running `bootRun` instance). No frontend exists yet — that's the
-next task.
+**Status:** feature-complete end to end — backend (Postgres, migrations,
+entities/repositories, all domain services, REST controllers matching
+`openapi.yaml` plus small `GET` reference-data listing endpoints, dev seed
+data) and a minimal React/TypeScript frontend under `frontend/`, all
+verified against the real running stack: a concurrency test proving the
+double-booking guarantee, and a full browser-driven walkthrough (form →
+availability → hold → confirm → confirmed, plus a genuine 409
+double-booking rejection) against a live `bootRun` instance. No README yet
+tying setup instructions together — that's the last remaining task.
 
 ## 2. Tech Stack
 
@@ -37,7 +37,11 @@ next task.
   the core databind library. `jackson-annotations` (`@JsonProperty` etc.)
   is still `com.fasterxml.jackson.annotation.*`, unchanged — only
   core/databind moved.
-- Frontend (planned, not yet scaffolded): React + TypeScript + Vite
+- Frontend: React 19 + TypeScript + Vite 5, under `frontend/` (separate
+  `package.json`, not part of the Gradle build). Pinned to Vite 5.x /
+  `@vitejs/plugin-react` 4.x deliberately — their current majors (Vite 8,
+  plugin-react 6) require Node `^20.19 || >=22.12`; check `node --version`
+  before bumping either.
 
 ## 3. Dev Commands
 
@@ -57,6 +61,16 @@ whatever's already in the DB (empty, on a fresh Postgres).
 `spring.datasource.*` in `application.properties` defaults to
 `localhost:5433` (overridable via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` env
 vars) to match `docker-compose.yml`.
+
+```bash
+npm --prefix frontend install   # first time only
+npm --prefix frontend run dev   # frontend on :5173, proxies API calls to :8080 (see WebConfig's CORS)
+npm --prefix frontend run build # type-check + production build
+```
+
+The frontend needs the backend already running (with seed data — see
+above) to have anything to show. `VITE_API_BASE_URL` overrides the backend
+URL the frontend calls (defaults to `http://localhost:8080`).
 
 ## 4. Core Logic Summary
 
