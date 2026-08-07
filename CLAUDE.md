@@ -12,12 +12,14 @@ in application code.
 **Status:** feature-complete end to end — backend (Postgres, migrations,
 entities/repositories, all domain services, REST controllers matching
 `openapi.yaml` plus small `GET` reference-data listing endpoints, dev seed
-data) and a minimal React/TypeScript frontend under `frontend/`, all
-verified against the real running stack: a concurrency test proving the
-double-booking guarantee, and a full browser-driven walkthrough (form →
-availability → hold → confirm → confirmed, plus a genuine 409
-double-booking rejection) against a live `bootRun` instance. No README yet
-tying setup instructions together — that's the last remaining task.
+data), a minimal React/TypeScript frontend under `frontend/`, a top-level
+`README.md`, and Dockerfiles for both — the whole stack runs in containers
+with no local JDK/Node needed (`docker compose --profile full up -d
+--build`; see [deployment.md](.claude/docs/deployment.md)). Verified
+against the real running stack both on the host and containerized: a
+concurrency test proving the double-booking guarantee, and a full
+browser-driven walkthrough (form → availability → hold → confirm →
+confirmed, plus a genuine 409 double-booking rejection).
 
 ## 2. Tech Stack
 
@@ -46,31 +48,33 @@ tying setup instructions together — that's the last remaining task.
 ## 3. Dev Commands
 
 ```bash
+docker compose --profile full up -d --build   # whole stack in containers — see deployment.md
+docker compose --profile full down            # stop everything
+```
+
+Gated behind `full` so it doesn't affect the plain `docker compose up -d`
+below (Postgres only). For active development, run the pieces directly:
+
+```bash
 docker compose up -d                              # start local Postgres (host port 5433, see docker-compose.yml)
 ./gradlew build                                    # compile + package
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun       # run the API on :8080, seeded with sample data (see below)
 ./gradlew test                                     # unit tests + Testcontainers-backed integration tests (spin up their own ephemeral Postgres — Docker must be running, but not docker-compose)
 ```
 
-`SPRING_PROFILES_ACTIVE=dev` activates `DevDataSeeder`, which inserts one
-dealership (3 bays, 3 technicians, 4 service types, 3 vehicles, 2
-customers — all with IDs starting at 1) if the DB is empty; safe to
-restart repeatedly. Without the `dev` profile, `bootRun` starts against
-whatever's already in the DB (empty, on a fresh Postgres).
-
-`spring.datasource.*` in `application.properties` defaults to
-`localhost:5433` (overridable via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` env
-vars) to match `docker-compose.yml`.
+`SPRING_PROFILES_ACTIVE=dev` activates `DevDataSeeder` (1 dealership, 3
+bays, 3 technicians, 4 service types, 3 vehicles, 2 customers; IDs from 1),
+idempotent — safe to restart. `spring.datasource.*` defaults to
+`localhost:5433` (override via `DB_URL`/`DB_USERNAME`/`DB_PASSWORD`).
 
 ```bash
 npm --prefix frontend install   # first time only
-npm --prefix frontend run dev   # frontend on :5173, proxies API calls to :8080 (see WebConfig's CORS)
+npm --prefix frontend run dev   # frontend on :5173, needs the backend already running
 npm --prefix frontend run build # type-check + production build
 ```
 
-The frontend needs the backend already running (with seed data — see
-above) to have anything to show. `VITE_API_BASE_URL` overrides the backend
-URL the frontend calls (defaults to `http://localhost:8080`).
+`VITE_API_BASE_URL` overrides the backend URL the frontend calls
+(default `http://localhost:8080`).
 
 ## 4. Core Logic Summary
 
@@ -136,6 +140,8 @@ Do not do any of the following without discussing first:
   scope cuts and assumptions
 - [`.claude/docs/git-workflow.md`](.claude/docs/git-workflow.md) — branch
   naming convention and workflow
+- [`.claude/docs/deployment.md`](.claude/docs/deployment.md) — Docker
+  Compose full-stack setup, container wiring
 - [`.claude/docs/openapi.yaml`](.claude/docs/openapi.yaml) — full API
   contract
 - [`.claude/docs/schema.sql`](.claude/docs/schema.sql) — full DDL,

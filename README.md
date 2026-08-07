@@ -28,6 +28,31 @@ Requires Docker, a JDK 17 toolchain (or let the Gradle wrapper provision
 one), and Node.js for the frontend (see the [Node version
 note](#node-version-note) below).
 
+### Option A — everything in Docker (fastest, no local JDK/Node needed)
+
+```bash
+docker compose --profile full up -d --build
+```
+
+That's it — Postgres, the seeded backend, and the frontend all build and
+start together. Open http://localhost:5173.
+
+This is gated behind the `full` profile so it doesn't interfere with
+Option B below (its `docker compose up -d`, with no profile, still starts
+*only* Postgres). See `docker-compose.yml` for how the containers are
+wired: the backend talks to Postgres over the internal Docker network
+(`postgres:5432`), while the frontend's build bakes in
+`http://localhost:8080` as its API base URL — that has to be a
+browser-reachable address, not a Docker-internal service name, since the
+frontend is a static bundle the *browser* calls directly, not something
+the backend talks to server-side.
+
+```bash
+docker compose --profile full down   # stop everything
+```
+
+### Option B — run the backend/frontend directly (better for active development)
+
 ```bash
 # 1. Start local Postgres
 docker compose up -d
@@ -43,8 +68,9 @@ npm --prefix frontend run dev
 # → UI on http://localhost:5173
 ```
 
-Open http://localhost:5173 and walk through the flow: pick a vehicle,
-service, and time → see real availability → hold a slot → confirm it.
+Either way, open http://localhost:5173 and walk through the flow: pick a
+vehicle, service, and time → see real availability → hold a slot → confirm
+it.
 
 ### Node version note
 
@@ -175,4 +201,7 @@ src/main/java/com/appointment_scheduler/
 src/main/resources/db/migration/   # Flyway migrations (source of truth for the schema)
 frontend/                          # React + TypeScript booking UI
 .claude/docs/                      # Full design documentation
+
+Dockerfile, docker-compose.yml     # Backend container + full-stack orchestration
+frontend/Dockerfile, nginx.conf    # Frontend container (static build served by nginx)
 ```

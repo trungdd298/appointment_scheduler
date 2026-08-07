@@ -19,5 +19,42 @@ services:
       timeout: 5s
       retries: 5
 
+  # `backend` and `frontend` are gated behind the "full" profile so the
+  # default `docker compose up -d` (used throughout CLAUDE.md/README for
+  # local dev — Postgres only, backend/frontend run directly on the host)
+  # is unaffected. Run `docker compose --profile full up -d --build` to
+  # bring up the whole stack in containers instead.
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: appointment_scheduler_backend
+    profiles: ["full"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://postgres:5432/appointment_scheduler
+      DB_USERNAME: appointment_scheduler
+      DB_PASSWORD: appointment_scheduler
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Must be reachable from the browser, not just other containers —
+        # the host's published backend port, not the internal service name.
+        VITE_API_BASE_URL: http://localhost:8080
+    container_name: appointment_scheduler_frontend
+    profiles: ["full"]
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   appointment_scheduler_pgdata:
