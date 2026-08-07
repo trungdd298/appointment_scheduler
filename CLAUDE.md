@@ -2,12 +2,11 @@
 
 ## 1. Project Overview
 
-Backend for a resource-constrained appointment scheduler (Keyloop take-home,
-"Scenario A — Unified Service Scheduler"). Given a vehicle, service type,
-dealership, and desired time, it finds a free ServiceBay **and** a qualified
-Technician for the full service duration, then creates a persistent
-Appointment — with double-booking prevented at the database level, not just
-in application code.
+Backend for a resource-constrained appointment scheduler. Given a vehicle,
+service type, dealership, and desired time, it finds a free ServiceBay
+**and** a qualified Technician for the full service duration, then creates
+a persistent Appointment — with double-booking prevented at the database
+level, not just in application code.
 
 **Status:** feature-complete end to end — backend (Postgres, migrations,
 entities/repositories, all domain services, REST controllers matching

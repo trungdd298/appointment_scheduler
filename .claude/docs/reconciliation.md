@@ -21,8 +21,8 @@ A `NEEDS_ATTENTION` appointment carries an `escalation_deadline`. If it
 isn't resolved by that deadline, the system automatically transitions it to
 `CANCELLED` — so the customer is never left showing up to a dealership with
 no one available. (Event publishing is not implemented — per
-[architecture.md](architecture.md), events are simulated/mocked for this
-assessment, no real broker exists.)
+[architecture.md](architecture.md), events are simulated/mocked; no real
+broker exists.)
 
 ## What's not implemented
 

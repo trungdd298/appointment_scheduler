@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: Keyloop Unified Service Scheduler API
+  title: Unified Service Scheduler API
   version: "1.0.0"
   description: >
-    Scenario A — Resource-constrained appointment booking with a two-phase
-    hold/confirm flow, browse-then-commit availability search, and
+    Resource-constrained appointment booking with a two-phase hold/confirm
+    flow, browse-then-commit availability search, and
     resource-unavailability reconciliation. See booking-flow.md,
     architecture.md, and reconciliation.md for the reasoning behind these
     API decisions.
@@ -15,15 +15,14 @@ servers:
 tags:
   - name: Reference Data
     description: >
-      Read-only listing endpoints for booking-form pickers. Not part of the
-      original scenario brief — added so a frontend has something to
-      populate dropdowns from instead of requiring raw IDs. See
-      booking-flow.md.
+      Read-only listing endpoints for booking-form pickers. Beyond the core
+      booking API — added so a frontend has something to populate dropdowns
+      from instead of requiring raw IDs. See booking-flow.md.
   - name: Availability
   - name: Appointments
   - name: Ops
   - name: Integrations
-    description: Internal endpoints used by other services (mocked within the scope of this assessment)
+    description: Internal endpoints used by other services (mocked — no real integration exists)
 
 paths:
   # ---------------------------------------------------------------------
@@ -252,9 +251,8 @@ paths:
       description: >
         Supports two use-case groups: (1) the Ops queue
         (?status=NEEDS_ATTENTION), and (2) forward-compatibility for
-        Scenario D / the Document Viewer (?vin=...) — the Scheduler acts as
-        one of the data sources the Document Viewer would aggregate in the
-        real Keyloop system.
+        VIN-based lookups (?vin=...) by other systems that would aggregate
+        Scheduler data — e.g. a document/history viewer.
       parameters:
         - name: status
           in: query
@@ -316,7 +314,7 @@ paths:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   # ---------------------------------------------------------------------
-  # Integrations — receiving events from external systems (mocked for this assessment)
+  # Integrations — receiving events from external systems (mocked, no real integration exists)
   # ---------------------------------------------------------------------
   /internal/resource-unavailability:
     post:

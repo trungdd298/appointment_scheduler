@@ -61,7 +61,7 @@ public class DevDataSeeder implements CommandLineRunner {
         Dealership dealership =
                 dealershipRepository.save(
                         Dealership.builder()
-                                .name("Keyloop Downtown")
+                                .name("Metro Downtown")
                                 .opensAt(LocalTime.of(8, 0))
                                 .closesAt(LocalTime.of(18, 0))
                                 .daysOpen(new Short[] {1, 2, 3, 4, 5, 6}) // Mon-Sat, closed Sunday
