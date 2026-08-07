@@ -1,4 +1,4 @@
-# Keyloop Unified Service Scheduler
+# Unified Service Scheduler
 
 A resource-constrained appointment scheduler for a vehicle dealership's
 service department. Given a vehicle, service type, dealership, and desired
@@ -7,11 +7,10 @@ the full service duration, then creates a persistent **Appointment** —
 with double-booking prevented at the database level, not just in
 application code.
 
-Built as a take-home assessment ("Scenario A — Unified Service
-Scheduler"). The design phase (concurrency model, data ownership
-boundaries, API contract) is documented in full under
-[`.claude/docs/`](.claude/docs/) — this README is the practical "how do I
-run it and how do I know it works" companion.
+The design phase (concurrency model, data ownership boundaries, API
+contract) is documented in full under [`.claude/docs/`](.claude/docs/) —
+this README is the practical "how do I run it and how do I know it works"
+companion.
 
 ## The core guarantee, in one sentence
 
@@ -163,7 +162,7 @@ is still listed.
 - **REST API**: matches [`.claude/docs/openapi.yaml`](.claude/docs/openapi.yaml)
   exactly, plus a small set of `GET` reference-data listing endpoints
   (dealerships/service-types/vehicles/customers) added for the frontend,
-  beyond the original scenario's scope.
+  beyond the original API design's scope.
 - **Frontend**: a minimal booking flow (see [Quick start](#quick-start)) —
   demonstrates the API working, not a production UI.
 - **Dev seed data**: `SPRING_PROFILES_ACTIVE=dev` inserts a deterministic
@@ -178,7 +177,7 @@ Full design rationale, entity reference, and the API contract live under
 | [`booking-flow.md`](.claude/docs/booking-flow.md) | Hold→Confirm state machine, availability search, REST layer implementation, endpoint reference |
 | [`data-model.md`](.claude/docs/data-model.md) | Entity reference, ownership per table, JPA mapping notes |
 | [`reconciliation.md`](.claude/docs/reconciliation.md) | Resource-unavailability model, reassignment rules, escalation |
-| [`assumptions.md`](.claude/docs/assumptions.md) | Every deliberate scope cut and undocumented-in-the-brief decision, with reasoning |
+| [`assumptions.md`](.claude/docs/assumptions.md) | Every deliberate scope cut and otherwise-undocumented design decision, with reasoning |
 | [`git-workflow.md`](.claude/docs/git-workflow.md) | Branch naming convention |
 | [`openapi.yaml`](.claude/docs/openapi.yaml) | Full API contract |
 | [`schema.sql`](.claude/docs/schema.sql) | Full DDL (consolidated copy of the Flyway migrations) |

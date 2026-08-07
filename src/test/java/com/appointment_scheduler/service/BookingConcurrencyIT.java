@@ -74,7 +74,7 @@ class BookingConcurrencyIT {
         Dealership dealership =
                 dealershipRepository.saveAndFlush(
                         Dealership.builder()
-                                .name("Keyloop Concurrency Test Dealership")
+                                .name("Metro Concurrency Test Dealership")
                                 .opensAt(LocalTime.of(8, 0))
                                 .closesAt(LocalTime.of(18, 0))
                                 .daysOpen(new Short[] {1, 2, 3, 4, 5, 6, 7})

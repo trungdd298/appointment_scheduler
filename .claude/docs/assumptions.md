@@ -23,7 +23,7 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
    not implemented.** See
    [reconciliation.md](reconciliation.md#whats-not-implemented).
 7. **Availability candidates are stepped at 15-minute increments.** Not
-   specified in the original brief; a reasonable default for service
+   specified anywhere in the requirements; a reasonable default for service
    scheduling. Not configurable — nothing in scope calls for finer
    granularity. See `AvailabilityService.SLOT_GRANULARITY`.
 8. **An appointment must start and end within a single day's open hours.**

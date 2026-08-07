@@ -177,7 +177,7 @@ than a separate web DTO — the shapes are already identical.
 
 `ReferenceDataController` (`GET /dealerships`, `/service-types`,
 `/vehicles`, `/customers`) is a small, deliberate scope addition beyond the
-original scenario brief: the booking flow otherwise requires the client to
+core booking API: the booking flow otherwise requires the client to
 already know raw dealership/vehicle/serviceType/customer IDs, which a real
 frontend can't do without *some* way to list them. Plain `findAll()` reads,
 no new business logic — see `WebConfig` for the CORS config that lets the

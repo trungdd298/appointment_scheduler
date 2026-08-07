@@ -53,7 +53,7 @@ class ReferenceDataApiIT {
     void seed() {
         dealershipRepository.saveAndFlush(
                 Dealership.builder()
-                        .name("Keyloop Reference Test Dealership")
+                        .name("Metro Reference Test Dealership")
                         .opensAt(LocalTime.of(8, 0))
                         .closesAt(LocalTime.of(18, 0))
                         .daysOpen(new Short[] {1, 2, 3, 4, 5})
@@ -74,7 +74,7 @@ class ReferenceDataApiIT {
         mockMvc
                 .perform(get("/dealerships"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.name == 'Keyloop Reference Test Dealership')]").exists());
+                .andExpect(jsonPath("$[?(@.name == 'Metro Reference Test Dealership')]").exists());
     }
 
     @Test

@@ -118,7 +118,7 @@ export default function App() {
 
   return (
     <main className="app">
-      <h1>Keyloop Service Scheduler</h1>
+      <h1>Metro Service Scheduler</h1>
       {error && <div className="error-banner">{error}</div>}
 
       {step === "loading" && <p>Loading…</p>}

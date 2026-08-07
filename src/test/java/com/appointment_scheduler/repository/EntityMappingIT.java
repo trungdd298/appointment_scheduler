@@ -56,7 +56,7 @@ class EntityMappingIT {
     void dealershipDaysOpenArrayRoundTrips() {
         Dealership dealership =
                 Dealership.builder()
-                        .name("Keyloop Downtown")
+                        .name("Metro Downtown")
                         .opensAt(LocalTime.of(8, 0))
                         .closesAt(LocalTime.of(18, 0))
                         .daysOpen(new Short[] {1, 2, 3, 4, 5})
@@ -100,7 +100,7 @@ class EntityMappingIT {
         Dealership dealership =
                 dealershipRepository.saveAndFlush(
                         Dealership.builder()
-                                .name("Keyloop Uptown")
+                                .name("Metro Uptown")
                                 .opensAt(LocalTime.of(8, 0))
                                 .closesAt(LocalTime.of(18, 0))
                                 .daysOpen(new Short[] {1, 2, 3, 4, 5})

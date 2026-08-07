@@ -89,7 +89,7 @@ class AppointmentApiIT {
         dealership =
                 dealershipRepository.saveAndFlush(
                         Dealership.builder()
-                                .name("Keyloop API Test Dealership " + UUID.randomUUID())
+                                .name("Metro API Test Dealership " + UUID.randomUUID())
                                 .opensAt(LocalTime.of(8, 0))
                                 .closesAt(LocalTime.of(18, 0))
                                 .daysOpen(new Short[] {1, 2, 3, 4, 5, 6, 7})
