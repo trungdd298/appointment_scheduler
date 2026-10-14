@@ -44,7 +44,7 @@ public class BookingService {
 
     /**
      * Bounded retry across candidate bays — not specified in the design
-     * docs beyond "bounded number of times" (design-decisions §1). Capped
+     * docs beyond "bounded number of times" (see assumptions.md). Capped
      * well above any realistic per-dealership bay count so it only limits
      * pathological cases, not normal operation.
      */
