@@ -32,7 +32,7 @@ without discussing first (see [`CLAUDE.md`](../../CLAUDE.md) §5).
    hours too. Reasonable given service-appointment durations are minutes to
    a few hours. See `BusinessHours.fits`.
 9. **Bay retry is bounded at 10 candidate bays per hold attempt.** Not
-   specified beyond design-decisions' "bounded number of times" — 10 is
+   specified beyond the design's "bounded number of times" — 10 is
    well above any realistic per-dealership bay count, so it only limits
    pathological cases. See `BookingService.MAX_BAY_RETRY_ATTEMPTS`.
 10. **`escalation_deadline` = the appointment's own `start_time`.** Design

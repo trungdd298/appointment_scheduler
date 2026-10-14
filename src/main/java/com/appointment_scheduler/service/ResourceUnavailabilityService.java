@@ -108,7 +108,7 @@ public class ResourceUnavailabilityService {
     private void markNeedsAttention(Appointment appointment, String reason) {
         appointment.setStatus(AppointmentStatus.NEEDS_ATTENTION);
         appointment.setNeedsAttentionReason(reason);
-        // "Near the appointment time" per design-decisions — not pinned to
+        // "Near the appointment time" per the design docs — not pinned to
         // an exact offset in the docs, so the deadline is the appointment's
         // own start time: unresolved by then, auto-cancel rather than leave
         // the customer showing up to no one available. See assumptions.md.

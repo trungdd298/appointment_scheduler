@@ -1,5 +1,5 @@
 -- =====================================================================
--- Scenario A — Unified Service Scheduler
+-- Unified Service Scheduler
 -- Consolidated schema (PostgreSQL 14+)
 -- See data-model.md, architecture.md, and reconciliation.md for the
 -- reasoning behind each decision.
